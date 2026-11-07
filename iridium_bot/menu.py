@@ -72,3 +72,22 @@ def session_page(connected: bool, uploaded: bool, owner_fallback: bool) -> tuple
         + note,
         buttons,
     )
+
+
+def connect_page(settings: Settings) -> tuple[str, ButtonRows]:
+    buttons: ButtonRows = []
+    if settings.project_github_url:
+        repo = settings.project_github_url.rstrip("/")
+        buttons.extend([
+            [{"text": "⬇️ Скачать помощник Windows", "url": f"{repo}/releases/latest", "style": "primary"}],
+            [{"text": "📖 Инструкция для друга", "url": f"{repo}/blob/main/docs/COOKIE_EXPORT_FOR_FRIENDS.md"}],
+        ])
+    buttons.append([{"text": "← В меню", "callback_data": "menu:home"}])
+    return (
+        "<b>🔑 Подключение Apple Music</b>\n\n"
+        "Скачайте помощник, распакуйте архив и запустите программу на своём компьютере. "
+        "Войдите в Apple Music в открывшемся Edge.\n\n"
+        "Отправьте полученный cookies.txt сюда <b>как документ</b> в течение 10 минут. "
+        "Файл даёт доступ к вашей сессии и будет сохранён на сервере бота.",
+        buttons,
+    )

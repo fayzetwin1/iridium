@@ -18,7 +18,7 @@ from .catalog import AppleCatalog, Track, parse_apple_url
 from .constants import MAX_FILE_BYTES, MAX_RESULTS
 from .downloader import run_download, wrapper_ready
 from .errors import CatalogError, DownloadError
-from .menu import about_page, help_page, home_page, session_page
+from .menu import about_page, connect_page, help_page, home_page, session_page
 from .settings import Settings
 from .telegram import Telegram
 
@@ -77,13 +77,7 @@ class Bot:
             content, buttons = self.menu_page(user_id, page)
         elif page == "connect":
             self.pending_connect[user_id] = time.monotonic()
-            content = (
-                "<b>🔑 Подключение Apple Music</b>\n\n"
-                "Запустите cookie_export на своём компьютере, войдите в Apple Music "
-                "и отправьте полученный cookies.txt сюда документом в течение 10 минут. "
-                "Файл содержит доступ к вашей сессии и попадёт на сервер бота."
-            )
-            buttons = [[{"text": "← В меню", "callback_data": "menu:home"}]]
+            content, buttons = connect_page(self.settings)
         elif page == "disconnect_confirm":
             content = "<b>Удалить сохранённую сессию?</b>\nПосле удаления потребуется снова отправить cookies.txt."
             buttons = [
@@ -309,7 +303,8 @@ class Bot:
             return
         if text in {"/connect", "/start connect"}:
             self.pending_connect[user_id] = time.monotonic()
-            await self.telegram.message(chat_id, "Запустите локальный cookie_export на своём компьютере, войдите в Apple Music и пришлите полученный cookies.txt сюда документом в течение 10 минут. Файл содержит доступ к вашей сессии и попадёт на сервер бота.")
+            content, buttons = connect_page(self.settings)
+            await self.telegram.message(chat_id, content, buttons, parse_mode="HTML")
             return
         if text == "/disconnect":
             uploaded = self.settings.session_dir / f"{user_id}.cookies.txt"

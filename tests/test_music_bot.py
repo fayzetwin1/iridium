@@ -122,6 +122,16 @@ class BotTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(buttons[0][0]["style"], "primary")
         self.assertEqual(buttons[1][0]["style"], "success")
 
+    async def test_connect_shows_standalone_helper_and_guide(self):
+        await self.bot.handle_message(SimpleNamespace(
+            from_user=SimpleNamespace(id=42),
+            chat=SimpleNamespace(id=42, type="private"),
+            text="/connect", document=None,
+        ))
+        buttons = self.telegram.messages[-1][2]
+        self.assertEqual(buttons[0][0]["url"], "https://github.com/fayzetwin1/iridium/releases/latest")
+        self.assertIn("COOKIE_EXPORT_FOR_FRIENDS.md", buttons[1][0]["url"])
+
     async def test_about_menu_uses_configured_links_and_edits_message(self):
         self.bot.settings = Settings(
             "secret", 42, Path("cookies.txt"),
