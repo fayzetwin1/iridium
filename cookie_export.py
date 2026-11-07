@@ -19,6 +19,13 @@ COOKIE_NAME = "media-user-token"
 MAX_UPLOAD_BYTES = 64 * 1024
 
 
+def default_output_path() -> Path:
+    """Put an exported cookie beside the standalone executable when frozen."""
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent / "cookies.txt"
+    return Path("cookies.txt")
+
+
 def find_music_cookie(cookies: list[dict]) -> dict | None:
     """Return the Apple Music token cookie, ignoring unrelated browser cookies."""
     for cookie in cookies:
@@ -127,17 +134,34 @@ def export_cookie(output: Path, browser_name: str, timeout: int, replace: bool) 
 
 
 def main() -> None:
+    try:
+        run_cli()
+    finally:
+        if getattr(sys, "frozen", False) and not {"-h", "--help", "--self-test"}.intersection(sys.argv) and sys.stdin.isatty():
+            try:
+                input("Нажмите Enter, чтобы закрыть окно…")
+            except (EOFError, KeyboardInterrupt):
+                pass
+
+
+def run_cli() -> None:
     parser = argparse.ArgumentParser(
         description="Log in to Apple Music locally and save gamdl's cookies.txt."
     )
-    parser.add_argument("--output", type=Path, default=Path("cookies.txt"))
+    parser.add_argument("--output", type=Path, default=default_output_path())
     parser.add_argument(
         "--browser", choices=("msedge", "chrome", "chromium"),
         default="msedge" if sys.platform == "win32" else "chromium",
     )
     parser.add_argument("--timeout", type=int, default=600, help="Login wait in seconds")
     parser.add_argument("--replace", action="store_true", help="Replace an existing cookie file")
+    parser.add_argument("--self-test", action="store_true", help=argparse.SUPPRESS)
     args = parser.parse_args()
+    if args.self_test:
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as playwright:
+            print(f"Playwright driver ready: {playwright.chromium.name}")
+        return
     if args.timeout < 1:
         parser.error("--timeout must be positive")
     try:

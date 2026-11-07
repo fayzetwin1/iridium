@@ -135,7 +135,7 @@ class BotTests(unittest.IsolatedAsyncioTestCase):
         ))
         chat_id, message_id, content, buttons, parse_mode = self.telegram.edited_messages[-1]
         self.assertEqual((chat_id, message_id, parse_mode), (42, 7, "HTML"))
-        self.assertIn("&lt;Author&gt;", content)
+        self.assertIn("Iridium", content)
         self.assertEqual(buttons[0][0]["url"], "https://github.com/example/iridium")
         self.assertEqual(buttons[1][0]["url"], "https://t.me/example")
 

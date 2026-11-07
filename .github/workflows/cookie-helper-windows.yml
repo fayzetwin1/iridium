@@ -1,0 +1,44 @@
+name: Windows cookie helper
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "cookie-helper-v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          architecture: x64
+      - name: Build standalone helper
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "playwright>=1.64,<2" "pyinstaller>=6,<7"
+          python -m PyInstaller --noconfirm --clean --onefile --name IridiumCookieExport --collect-all playwright cookie_export.py
+          & .\dist\IridiumCookieExport.exe --help | Out-Null
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & .\dist\IridiumCookieExport.exe --self-test
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Copy-Item docs/COOKIE_EXPORT_FOR_FRIENDS.md dist/ИНСТРУКЦИЯ.md
+          Compress-Archive -Path dist/IridiumCookieExport.exe,dist/ИНСТРУКЦИЯ.md -DestinationPath dist/IridiumCookieExport-Windows.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: IridiumCookieExport-Windows
+          path: dist/IridiumCookieExport-Windows.zip
+          if-no-files-found: error
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/cookie-helper-v')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" "dist/IridiumCookieExport-Windows.zip" --verify-tag --title "Iridium cookie helper ${{ github.ref_name }}" --notes-file docs/COOKIE_EXPORT_FOR_FRIENDS.md

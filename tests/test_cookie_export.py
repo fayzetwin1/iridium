@@ -2,8 +2,9 @@ import tempfile
 import unittest
 from http.cookiejar import MozillaCookieJar
 from pathlib import Path
+from unittest.mock import patch
 
-from cookie_export import find_music_cookie, netscape_cookie, read_netscape_cookie, write_cookie
+from cookie_export import default_output_path, find_music_cookie, netscape_cookie, read_netscape_cookie, write_cookie
 
 
 class CookieExportTests(unittest.TestCase):
@@ -45,3 +46,8 @@ class CookieExportTests(unittest.TestCase):
             ".music.apple.com\tTRUE\t/\tTRUE\t2000000000\tmedia-user-token\tfake.test.token\n"
         ).encode()
         self.assertEqual(read_netscape_cookie(data), self.cookie)
+
+    def test_frozen_helper_writes_beside_executable(self):
+        with patch("cookie_export.sys.frozen", True, create=True), \
+             patch("cookie_export.sys.executable", r"C:\Downloads\IridiumCookieExport.exe"):
+            self.assertEqual(default_output_path(), Path(r"C:\Downloads\cookies.txt").resolve())
