@@ -1,0 +1,9 @@
+.env
+cookies.txt
+*.cookies.txt
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+downloads/
+sessions/
