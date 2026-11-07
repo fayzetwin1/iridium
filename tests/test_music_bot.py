@@ -9,7 +9,7 @@ from tempfile import TemporaryDirectory
 from aiogram import Bot as AiogramBot
 from aiogram.types import Chat, FSInputFile, InlineKeyboardMarkup, Message, Update, User
 
-from music_bot import Bot, Settings, Telegram, Track, download_command, parse_apple_url
+from music_bot import Bot, Settings, Telegram, Track, download_command, main, parse_apple_url
 from cookie_export import netscape_cookie
 
 
@@ -88,6 +88,14 @@ class UrlTests(unittest.TestCase):
         self.assertIn("alac", command)
         self.assertIn("--use-wrapper", command)
         self.assertNotIn("secret", command)
+
+    def test_legacy_entrypoint_starts_async_bot(self):
+        fake_bot = SimpleNamespace(run=AsyncMock())
+        with patch("iridium_bot.main.Settings.from_env", return_value=Settings("secret", 42, Path("cookies.txt"))), \
+             patch("iridium_bot.main.Telegram"), \
+             patch("iridium_bot.main.Bot", return_value=fake_bot):
+            main()
+        fake_bot.run.assert_awaited_once()
 
 
 class BotTests(unittest.IsolatedAsyncioTestCase):
